@@ -91,7 +91,7 @@ footer a{color:var(--pink)}
 </head>
 <body>
 <header><div class="in">
-  <h1><img src="logo.png" alt="SPILLOVER in Aomori 2026" width="220" height="62" style="display:block;height:auto"></h1>
+  <h1><img src="logo.png" alt="SPILLOVER in Aomori 2026" width="240" height="60" style="display:block;height:auto"></h1>
   <p>参加表明カードをつくって、SNSでシェアしよう</p>
   <div class="inapp" id="inapp" hidden></div>
 </div></header>
@@ -224,7 +224,7 @@ const exportCv = document.createElement('canvas'); exportCv.width = 1080;
 const st = {type:'join', fmt:'square', img:null, zoom:1, ox:0, oy:0, postEdited:false, exporting:false, hits:[]};
 const HINT = 'rgba(232,22,138,.75)';
 const qr = new Image(); qr.src = QR_SRC;
-// ロゴは告知画像（gen_images.py）と同じCSSで書き出した画像を使い、形を崩さない
+// ロゴは公式ロゴ（植松さん提供のバナー画像）から背景を抜いた画像を使う。フォントで組み直さない
 const logoImg = new Image(); logoImg.src = 'logo.png';
 
 // --- session chips ---
@@ -433,7 +433,7 @@ function drawCard(canvas) {
     drawLogo(M, top + 34, 860);
     ctx.font = JP(900, 40); ctx.fillStyle = '#111'; ctx.fillText('青森から、挑戦と変革の文化をつくる。', M, top + 362);
   } else {
-    drawLogo(M, top, 560);
+    drawLogo(M, top, 600);
     ctx.textAlign = 'right'; ctx.fillStyle = '#111';
     ctx.font = EN(700, 40); ctx.fillText('2026.11.2 MON', W - M, top + 62);
     ctx.font = JP(700, 26); ctx.fillText('ねぶたの家 ワ・ラッセ', W - M, top + 104);
