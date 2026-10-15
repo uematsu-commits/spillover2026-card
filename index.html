@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Jost:wght@500;700&family=Kaushan+Script&family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@500;700&family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
 :root{
   --pink:#E8168A; --ink:#111; --sub:#555; --line:#e3dfe8; --bg:#f7f5fa; --card:#fff;
@@ -23,6 +23,7 @@
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans JP','Hiragino Sans',sans-serif;font-weight:500;-webkit-text-size-adjust:100%}
 header{background:var(--grad);padding:20px 16px 18px}
 header .in{max-width:1080px;margin:0 auto}
@@ -71,7 +72,7 @@ canvas.story{width:auto;max-width:100%;max-height:70vh}
 .actions .wide{grid-column:1/-1}
 .posttext{margin-top:12px}
 .posttext textarea{font-size:14px;min-height:120px}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);max-width:calc(100% - 32px);text-align:center;background:var(--ink);color:#fff;padding:10px 18px;border-radius:16px;font-size:14px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
 footer{max-width:1080px;margin:0 auto;padding:8px 16px 40px;font-size:12px;color:var(--sub);line-height:1.7}
 footer a{color:var(--pink)}
@@ -79,7 +80,7 @@ footer a{color:var(--pink)}
 </head>
 <body>
 <header><div class="in">
-  <h1>SPILLOVER <small>in Aomori 2026</small></h1>
+  <h1><img src="logo.png" alt="SPILLOVER in Aomori 2026" width="220" height="62" style="display:block;height:auto"></h1>
   <p>参加表明カードをつくって、SNSでシェアしよう</p>
 </div></header>
 
@@ -97,8 +98,8 @@ footer a{color:var(--pink)}
     <div class="field">
       <label class="t">写真<span class="opt">任意・端末の外には送信されません</span></label>
       <div class="photo-row">
-        <label class="btn dark" for="photo">写真を選ぶ</label>
-        <input type="file" id="photo" accept="image/*" hidden>
+        <button class="btn dark" id="pickPhoto" type="button">写真を選ぶ</button>
+        <input type="file" id="photo" accept="image/*" class="vh" tabindex="-1" aria-hidden="true">
         <button class="btn" id="clearPhoto" type="button" disabled>写真を外す</button>
       </div>
       <div class="zoom" id="zoomRow" hidden>
@@ -190,6 +191,8 @@ const $ = id => document.getElementById(id);
 const cv = $('cv'), ctx = cv.getContext('2d');
 const st = {type:'join', fmt:'square', img:null, zoom:1, ox:0, oy:0, postEdited:false};
 const qr = new Image(); qr.src = QR_SRC;
+// ロゴは告知画像（gen_images.py）と同じCSSで書き出した画像を使い、形を崩さない
+const logoImg = new Image(); logoImg.src = 'logo.png';
 
 // --- session chips ---
 const sessBox = $('sessions');
@@ -332,18 +335,8 @@ function drawAvatar(cx, cy, r, name) {
   ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
 }
 
-function drawLogo(x, y, k) {
-  ctx.fillStyle = '#111'; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
-  ctx.font = EN(700, 112 * k);
-  if ('letterSpacing' in ctx) ctx.letterSpacing = `${6 * k}px`;
-  ctx.fillText('SPILLOVER', x, y + 100 * k);
-  const sw = ctx.measureText('SPILLOVER').width;
-  ctx.font = EN(700, 40 * k);
-  if ('letterSpacing' in ctx) ctx.letterSpacing = `${5 * k}px`;
-  ctx.fillText('in Aomori', x + 8 * k, y + 168 * k);
-  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
-  ctx.font = `400 ${92 * k}px 'Kaushan Script','Brush Script MT',cursive`;
-  ctx.textAlign = 'right'; ctx.fillText('2026', x + sw, y + 178 * k); ctx.textAlign = 'left';
+function drawLogo(x, y, w) {
+  if (logoImg.complete && logoImg.naturalWidth) ctx.drawImage(logoImg, x, y, w, w * logoImg.naturalHeight / logoImg.naturalWidth);
 }
 
 function render() {
@@ -360,10 +353,10 @@ function render() {
   if (story) {
     ctx.font = EN(700, 34); ctx.fillStyle = '#E8168A'; if ('letterSpacing' in ctx) ctx.letterSpacing = '6px';
     ctx.fillText('2026.11.2 MON ／ AOMORI', M, top); if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
-    drawLogo(M, top + 20, 1.12);
-    ctx.font = JP(900, 40); ctx.fillStyle = '#111'; ctx.fillText('青森から、挑戦と変革の文化をつくる。', M, top + 300);
+    drawLogo(M, top + 34, 860);
+    ctx.font = JP(900, 40); ctx.fillStyle = '#111'; ctx.fillText('青森から、挑戦と変革の文化をつくる。', M, top + 362);
   } else {
-    drawLogo(M, top - 10, .78);
+    drawLogo(M, top, 560);
     ctx.textAlign = 'right'; ctx.fillStyle = '#111';
     ctx.font = EN(700, 40); ctx.fillText('2026.11.2 MON', W - M, top + 62);
     ctx.font = JP(700, 26); ctx.fillText('ねぶたの家 ワ・ラッセ', W - M, top + 104);
@@ -371,7 +364,7 @@ function render() {
   }
 
   // card area
-  const cardTop = story ? 580 : 236;
+  const cardTop = story ? 630 : 236;
   const footH = story ? 280 : 190;
   const cardBot = H - (story ? 200 : 0) - footH;
   const pad = story ? 56 : 44;
@@ -432,12 +425,18 @@ function update() {
 }
 document.querySelectorAll('input,textarea').forEach(el => { if (el.id !== 'post' && el.id !== 'photo' && el.id !== 'zoom') el.addEventListener('input', update); });
 
+$('pickPhoto').addEventListener('click', () => { $('photo').value = ''; $('photo').click(); });
 $('photo').addEventListener('change', e => {
   const f = e.target.files[0]; if (!f) return;
   const url = URL.createObjectURL(f), im = new Image();
   im.onload = () => { st.img = im; st.zoom = 1; st.ox = st.oy = 0; $('zoom').value = 1;
     $('zoomRow').hidden = $('dragNote').hidden = false; $('clearPhoto').disabled = false; render(); };
-  im.onerror = () => toast('この画像は読み込めませんでした');
+  im.onerror = () => {
+    URL.revokeObjectURL(url);
+    // iPhoneの写真（HEIC）はSafari以外のPCブラウザでは読めない
+    const heic = /hei[cf]$/i.test(f.name) || /hei[cf]/i.test(f.type);
+    toast(heic ? 'HEIC形式の写真はこのブラウザで読めません。JPEGかPNGを選ぶか、スマホから作成してください' : 'この画像は読み込めませんでした。JPEGかPNGを選んでください', 5000);
+  };
   im.src = url;
 });
 $('clearPhoto').addEventListener('click', () => { st.img = null; $('photo').value = ''; $('zoomRow').hidden = $('dragNote').hidden = true; $('clearPhoto').disabled = true; render(); });
@@ -481,14 +480,13 @@ async function copy(text, quiet) {
   catch { $('post').select(); document.execCommand('copy'); if (!quiet) toast('投稿文をコピーしました'); }
 }
 $('copyBtn').addEventListener('click', () => copy($('post').value));
-let tt; function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2400); }
+let tt; function toast(m, ms = 2400) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), ms); }
 
 // --- boot: wait for web fonts so canvas text uses them ---
 update();
-qr.onload = render;
+qr.onload = render; logoImg.onload = render;
 Promise.all([
   document.fonts.load("700 40px 'Jost'"), document.fonts.load("500 24px 'Jost'"),
-  document.fonts.load("400 80px 'Kaushan Script'"),
   document.fonts.load("900 40px 'Noto Sans JP'", '参加します'), document.fonts.load("700 30px 'Noto Sans JP'", 'あ'),
   document.fonts.load("500 20px 'Noto Sans JP'", 'あ'),
 ]).then(() => document.fonts.ready).then(render, render);
