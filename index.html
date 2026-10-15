@@ -208,9 +208,11 @@ function wrap(text, maxW, maxLines) {
   const lines = [];
   for (const para of String(text).split('\n')) {
     let cur = '';
-    for (const ch of [...para]) {
-      const next = cur + ch;
-      if (ctx.measureText(next).width > maxW && cur && !NO_HEAD.includes(ch)) { lines.push(cur); cur = ch; }
+    // 英数字の単語は途中で折り返さない（1語が1行に収まらない場合だけ文字単位）
+    const tokens = para.match(/[A-Za-z0-9@#&.,'’\-]+|\s+|./gu) || [];
+    for (const tk of tokens.flatMap(t => ctx.measureText(t).width > maxW ? [...t] : [t])) {
+      const next = cur + tk;
+      if (ctx.measureText(next).width > maxW && cur.trim() && !NO_HEAD.includes(tk[0])) { lines.push(cur.trimEnd()); cur = tk.trimStart(); }
       else cur = next;
     }
     lines.push(cur);
