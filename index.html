@@ -508,7 +508,7 @@ $('saveBtn').addEventListener('click', save);
 $('shareBtn').addEventListener('click', async () => {
   const b = await blob(), file = new File([b], fname(), {type: 'image/png'});
   const text = $('post').value;
-  if (navigator.canShare && navigator.canShare({files: [file]})) {
+  if (useNativeShare && navigator.canShare({files: [file]})) {
     try { await copy(text, true); await navigator.share({files: [file], text}); }
     catch (err) { if (err.name !== 'AbortError') toast('シェアできませんでした。画像を保存してください'); }
   } else {
@@ -522,8 +522,12 @@ async function copy(text, quiet) {
 }
 $('copyBtn').addEventListener('click', () => copy($('post').value));
 // PCブラウザは画像を直接SNSへ渡せないため、画像を保存して投稿画面を開く
+// MacのChromeやSafariも共有メニューを出せるが、中身はAirDrop・メモ等でSNSアプリが出ない。
+// そのため共有メニューはスマホ・タブレットだけで使い、PCは保存＋投稿画面を開くボタンにする
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 const canShareFiles = (() => { try { return !!(navigator.canShare && navigator.canShare({files: [new File([''], 'a.png', {type: 'image/png'})]})); } catch { return false; } })();
-if (!canShareFiles) { $('pcShare').hidden = false; $('shareBtn').textContent = '画像を保存して投稿文をコピー'; }
+const useNativeShare = isMobile && canShareFiles;
+if (!useNativeShare) { $('pcShare').hidden = false; $('shareBtn').textContent = '画像を保存して投稿文をコピー'; }
 $('xBtn').addEventListener('click', () => {
   window.open(`https://x.com/intent/post?text=${encodeURIComponent($('post').value)}`, '_blank', 'noopener');
   save(); toast('画像を保存しました。Xの投稿画面に画像をドラッグしてください', 5000);
