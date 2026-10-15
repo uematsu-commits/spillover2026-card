@@ -254,7 +254,10 @@ function wrap(text, maxW, maxLines) {
     const tokens = para.match(/[A-Za-z0-9@#&.,'’\-]+|\s+|./gu) || [];
     for (const tk of tokens.flatMap(t => ctx.measureText(t).width > maxW ? [...t] : [t])) {
       const next = cur + tk;
-      if (ctx.measureText(next).width > maxW && cur.trim() && !NO_HEAD.includes(tk[0])) { lines.push(cur.trimEnd()); cur = tk.trimStart(); }
+      // 行頭禁則（「！」「。」等を行頭に置かない）は、ぶら下げ1文字までに限る。
+      // 「！！！…」のように続くと改行できる場所がなくなり、カードからはみ出すため
+      const hang = NO_HEAD.includes(tk[0]) && ctx.measureText(cur).width <= maxW;
+      if (ctx.measureText(next).width > maxW && cur.trim() && !hang) { lines.push(cur.trimEnd()); cur = tk.trimStart(); }
       else cur = next;
     }
     lines.push(cur);
