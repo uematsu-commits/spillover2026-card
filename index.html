@@ -75,6 +75,7 @@ canvas.story{width:auto;max-width:100%;max-height:70vh}
 .actions .wide{grid-column:1/-1}
 .posttext{margin-top:12px}
 .posttext textarea{font-size:14px;min-height:120px}
+body.dragging .canvas-wrap{outline:3px dashed var(--pink);outline-offset:4px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);max-width:calc(100% - 32px);text-align:center;background:var(--ink);color:#fff;padding:10px 18px;border-radius:16px;font-size:14px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
 footer{max-width:1080px;margin:0 auto;padding:8px 16px 40px;font-size:12px;color:var(--sub);line-height:1.7}
@@ -104,6 +105,7 @@ footer a{color:var(--pink)}
         <label class="btn dark filebtn">写真を選ぶ<input type="file" id="photo" accept="image/*,.heic,.heif"></label>
         <button class="btn" id="clearPhoto" type="button" disabled>写真を外す</button>
       </div>
+      <div class="note" id="dropNote">写真をこのページにドラッグ＆ドロップ、またはコピーして貼り付け（PCは ⌘V／Ctrl+V）でも入れられます。</div>
       <div class="zoom" id="zoomRow" hidden>
         <span>拡大</span><input type="range" id="zoom" min="1" max="3" step="0.01" value="1">
       </div>
@@ -449,8 +451,20 @@ async function isHeic(f) {
   return /^ftyp(heic|heix|hevc|mif1|msf1)/.test(head);
 }
 $('photo').addEventListener('click', () => { $('photo').value = ''; });
-$('photo').addEventListener('change', async e => {
-  const f = e.target.files[0]; if (!f) return;
+$('photo').addEventListener('change', e => { if (e.target.files[0]) loadPhoto(e.target.files[0]); });
+// ファイル選択画面が開かない環境（管理されたChromeなど）向けに、ドラッグ＆ドロップと貼り付けでも読み込む
+const imageFrom = list => [...(list || [])].find(f => f && (/^image\//.test(f.type) || /\.(hei[cf]|jpe?g|png|webp|gif)$/i.test(f.name)));
+window.addEventListener('dragover', e => { e.preventDefault(); document.body.classList.add('dragging'); });
+window.addEventListener('dragleave', e => { if (!e.relatedTarget) document.body.classList.remove('dragging'); });
+window.addEventListener('drop', e => {
+  e.preventDefault(); document.body.classList.remove('dragging');
+  const f = imageFrom(e.dataTransfer.files); if (f) loadPhoto(f); else toast('画像ファイルをドロップしてください');
+});
+window.addEventListener('paste', e => {
+  const f = imageFrom([...e.clipboardData.items].filter(i => i.kind === 'file').map(i => i.getAsFile()));
+  if (f) { e.preventDefault(); loadPhoto(f); }
+});
+async function loadPhoto(f) {
   let im;
   try { im = await loadImage(f); }
   catch {
@@ -465,7 +479,7 @@ $('photo').addEventListener('change', async e => {
   }
   st.img = im; st.zoom = 1; st.ox = st.oy = 0; $('zoom').value = 1;
   $('zoomRow').hidden = $('dragNote').hidden = false; $('clearPhoto').disabled = false; render();
-});
+}
 $('clearPhoto').addEventListener('click', () => { st.img = null; $('photo').value = ''; $('zoomRow').hidden = $('dragNote').hidden = true; $('clearPhoto').disabled = true; render(); });
 $('zoom').addEventListener('input', e => { st.zoom = +e.target.value; render(); });
 
