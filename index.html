@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SPILLOVER 2026 参加表明カード</title>
+<meta name="description" content="SPILLOVER 2026 in Aomori（11/2・青森）の参加表明カードを作ってSNSでシェアできます。写真はお使いの端末の中だけで処理され、どこにも送信されません。">
+<meta property="og:title" content="SPILLOVER 2026 参加表明カード">
+<meta property="og:description" content="11/2（月）ねぶたの家 ワ・ラッセ。参加表明カードを作ってシェアしよう。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@500;700&family=Kaushan+Script&family=Noto+Sans+JP:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --pink:#E8168A; --ink:#111; --sub:#555; --line:#e3dfe8; --bg:#f7f5fa; --card:#fff;
+  --grad:linear-gradient(100deg,#BFE9F6 0%,#C9C6E6 35%,#E15AAE 70%,#E8168A 100%);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans JP','Hiragino Sans',sans-serif;font-weight:500;-webkit-text-size-adjust:100%}
+header{background:var(--grad);padding:20px 16px 18px}
+header .in{max-width:1080px;margin:0 auto}
+header h1{margin:0;font-family:'Jost',sans-serif;font-weight:700;font-size:32px;letter-spacing:.04em;line-height:1}
+header h1 small{font-size:.5em;letter-spacing:.08em;margin-left:.4em}
+header p{margin:8px 0 0;font-weight:700;font-size:15px}
+main{max-width:1080px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:820px){main{grid-template-columns:minmax(0,1fr)}.preview{order:-1}}
+.panel{background:var(--card);border-radius:16px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.05)}
+.field{margin-bottom:18px}
+.field:last-child{margin-bottom:0}
+label.t{display:block;font-weight:700;font-size:14px;margin-bottom:6px}
+label.t .opt{font-weight:500;color:var(--sub);font-size:12px;margin-left:6px}
+input[type=text],textarea{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+textarea{resize:vertical;min-height:64px}
+input:focus,textarea:focus{outline:2px solid var(--pink);outline-offset:-1px;border-color:transparent}
+.count{font-size:12px;color:var(--sub);text-align:right;margin-top:2px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg label{flex:1;min-width:90px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{display:block;text-align:center;padding:10px 6px;border:1px solid var(--line);border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;background:#fff}
+.seg input:checked+span{background:var(--ink);color:#fff;border-color:var(--ink)}
+.seg input:focus-visible+span{outline:2px solid var(--pink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips label{cursor:pointer}
+.chips input{position:absolute;opacity:0;pointer-events:none}
+.chips span{display:inline-block;padding:7px 12px;border:1px solid var(--line);border-radius:999px;font-size:13px;font-weight:700;background:#fff}
+.chips input:checked+span{background:var(--pink);border-color:var(--pink);color:#fff}
+.chips input:focus-visible+span{outline:2px solid var(--ink)}
+.photo-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{appearance:none;border:0;border-radius:12px;padding:12px 16px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;background:#eee;color:var(--ink)}
+.btn.primary{background:var(--pink);color:#fff}
+.btn.dark{background:var(--ink);color:#fff}
+.btn:disabled{opacity:.4;cursor:default}
+.zoom{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub);margin-top:8px}
+.zoom input{flex:1}
+.note{font-size:12px;color:var(--sub);line-height:1.6;margin-top:8px}
+.preview{position:sticky;top:12px}
+.mobile-hint{display:none;margin:0 0 10px}
+@media (max-width:820px){.mobile-hint{display:block}}
+@media (max-width:820px){.preview{position:static}}
+.canvas-wrap{display:flex;justify-content:center;background:#ece8f1;border-radius:14px;padding:12px}
+canvas{display:block;width:100%;height:auto;border-radius:6px;box-shadow:0 4px 18px rgba(0,0,0,.12);touch-action:none;cursor:grab}
+canvas.story{width:auto;max-width:100%;max-height:70vh}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.actions .wide{grid-column:1/-1}
+.posttext{margin-top:12px}
+.posttext textarea{font-size:14px;min-height:120px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:700;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+footer{max-width:1080px;margin:0 auto;padding:8px 16px 40px;font-size:12px;color:var(--sub);line-height:1.7}
+footer a{color:var(--pink)}
+</style>
+</head>
+<body>
+<header><div class="in">
+  <h1>SPILLOVER <small>in Aomori 2026</small></h1>
+  <p>参加表明カードをつくって、SNSでシェアしよう</p>
+</div></header>
+
+<main>
+  <section class="panel" aria-label="入力">
+    <div class="field">
+      <label class="t">あなたは？</label>
+      <div class="seg" id="typeSeg">
+        <label><input type="radio" name="type" value="join" checked><span>参加します</span></label>
+        <label><input type="radio" name="type" value="want"><span>行きたい！</span></label>
+        <label><input type="radio" name="type" value="speaker"><span>登壇します</span></label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="t">写真<span class="opt">任意・端末の外には送信されません</span></label>
+      <div class="photo-row">
+        <label class="btn dark" for="photo">写真を選ぶ</label>
+        <input type="file" id="photo" accept="image/*" hidden>
+        <button class="btn" id="clearPhoto" type="button" disabled>写真を外す</button>
+      </div>
+      <div class="zoom" id="zoomRow" hidden>
+        <span>拡大</span><input type="range" id="zoom" min="1" max="3" step="0.01" value="1">
+      </div>
+      <div class="note" id="dragNote" hidden>プレビューの写真をドラッグすると位置を調整できます。</div>
+    </div>
+
+    <div class="field">
+      <label class="t" for="name">お名前</label>
+      <input type="text" id="name" maxlength="20" placeholder="例：青森 太郎" autocomplete="name">
+    </div>
+
+    <div class="field">
+      <label class="t" for="title">肩書き・所属<span class="opt">任意</span></label>
+      <input type="text" id="title" maxlength="40" placeholder="例：〇〇株式会社 代表／弘前大学 2年">
+    </div>
+
+    <div class="field">
+      <label class="t" for="msg">ひとことメッセージ<span class="opt">任意</span></label>
+      <textarea id="msg" maxlength="60" placeholder="例：青森で挑戦している人と、とことん話したい！"></textarea>
+      <div class="count"><span id="msgCount">0</span>/60</div>
+    </div>
+
+    <div class="field">
+      <label class="t" for="meet">こんな人に会いたい<span class="opt">任意</span></label>
+      <textarea id="meet" maxlength="50" placeholder="例：一次産業で新しいことを始めたい人"></textarea>
+      <div class="count"><span id="meetCount">0</span>/50</div>
+    </div>
+
+    <div class="field">
+      <label class="t" id="sessLabel">聞きたいセッション<span class="opt">任意・複数可</span></label>
+      <div class="chips" id="sessions"></div>
+    </div>
+  </section>
+
+  <section class="preview" aria-label="プレビュー">
+    <div class="panel">
+      <div class="seg" id="fmtSeg" style="margin-bottom:12px">
+        <label><input type="radio" name="fmt" value="square" checked><span>正方形（投稿）</span></label>
+        <label><input type="radio" name="fmt" value="story"><span>縦長（ストーリーズ）</span></label>
+      </div>
+      <div class="note mobile-hint">↓ 下の入力欄で、写真・名前・メッセージを入れるとカードに反映されます</div>
+      <div class="canvas-wrap"><canvas id="cv" width="1080" height="1080" aria-label="カードのプレビュー"></canvas></div>
+      <div class="actions">
+        <button class="btn primary wide" id="shareBtn" type="button">画像をシェアする</button>
+        <button class="btn" id="saveBtn" type="button">画像を保存</button>
+        <button class="btn" id="copyBtn" type="button">投稿文をコピー</button>
+      </div>
+      <div class="posttext">
+        <label class="t" for="post">投稿文（自由に編集できます）</label>
+        <textarea id="post"></textarea>
+      </div>
+      <div class="note">スマホでは「画像をシェアする」から Instagram・X・Facebook・LINE などに直接投稿できます。PCでは画像を保存して、投稿文と一緒に添付してください。</div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  SPILLOVER 2026 in Aomori｜2026年11月2日（月）13:00–17:30｜ねぶたの家 ワ・ラッセ 2F イベントホール｜会場参加無料<br>
+  お申し込み（10/30 17:00締切）：<a href="https://aomori-spillover.peatix.com/" target="_blank" rel="noopener">aomori-spillover.peatix.com</a><br>
+  主催：青森県　運営：株式会社プレイノベーション<br>
+  このページで選んだ写真や入力内容は、お使いの端末の中だけで画像化され、サーバーには送信・保存されません。
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const PEATIX = 'https://aomori-spillover.peatix.com/';
+const HASHTAGS = ''; // 公式ハッシュタグが決まったら '#〇〇' を入れる
+const QR_SRC = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXQAAAF0AQAAAAAbGP/+AAACfklEQVR4nO1cUW7DIAy1rf6TG/T+x9oNwgk82WAImZSWam1I8VO0MfpUWWA9OzYMGXoQqYsO4PxvX5+IBTIREReQcZQHF2gJ49nfB3L+v67PDQCyBMUl/eYojoSB0T7aEHz9j0Ez8qOJT0JgeXRQRSkThrS/A9RDBuc/oz97xAUisglRC1//Y9Dk/oMatnSwZhX6qD3k/OutT2BmdZWI/IO8Qk2kF2gIY9rfAeohg/Of0R/8M8tx0QflaQi+/segyfi3Jkhp8EKdkUAWNJY1UWw0+8n5p64P8AoSm9RJJHKlAW/+DPJkrL5fx6DJ+LBzEpkKLE6lflUGNjma/eT8k/2Hi2/on+mneg4ULbJykPvPI9Ck/sNVf7LmbOJakSn3n6vtL72ZD02cSj5j+Q8U56kJ0mj2k/NHWZ+wkZrkM1Ff3C21Vqfy/ToGzVn/4U3/dFsO4l1rdTj7yfmn5z/c5sxVf0KOZeUdzePXI9Ck9eewigpZwbBIECflqSXE0ewn55+vP5zrP1VwUkatEFIWH8+fH4Km48d81DBny9Y5rQg5f9bJ8ezvAzn/Hf0vTgc2EjZRjPUUUOqivvT95PyvXh9oWhVWRawptME4o9lPzh8h/8mw+mGpSIO9f1l3w/frGDQZH/JpsbYXtnUbblqoo9lPzj99fdjER84froB3cZWaQgc9DuTn558CzXj+OYqviJcEzmO7wgNWjpYEW7Lo0ewn54+QP0M7qEfIOIczgcevx6Cp718EPb9a2l5hzSpkouT6c7X9pU/wg75tJei43ryIWCfv3n+/5v6+mY8JetVd5nbXBqNdhH/1+3tAXWxw/snrif7/Nw5Bxx/D7PxfizW38SHQIiAAAAAASUVORK5CYII=';
+
+const SESSIONS = [
+  {id:'op',    chip:'OPENING',            full:'OPENING SESSION｜青森から挑戦と変革の文化をつくる'},
+  {id:'t1',    chip:'TALK1 次の成長産業',  full:'TALK SESSION 1｜北の地から次の成長産業をつくるには'},
+  {id:'t2',    chip:'TALK2 1億→100億',    full:'TALK SESSION 2｜1億→10億→100億、地域で事業を伸ばす条件とは'},
+  {id:'pitch', chip:'チャレンジャーズピッチ', full:'CHALLENGERS PITCH｜青森の挑戦者4組がピッチ'},
+  {id:'t3',    chip:'TALK3 体験的な学び',  full:'TALK SESSION 3｜関わりしろのある地域で、体験的に学ぶ価値'},
+  {id:'party', chip:'アフターパーティー',   full:'AFTER PARTY｜1F 魚っ喰いの田（17:45〜）'},
+];
+const BADGE = {join:'参加します！', want:'行きたい！', speaker:'登壇します！'};
+const POST_HEAD = {
+  join:'11/2（月）青森で開催される「SPILLOVER 2026 in Aomori」に参加します！',
+  want:'11/2（月）青森で開催される「SPILLOVER 2026 in Aomori」、行きたい！',
+  speaker:'11/2（月）青森で開催される「SPILLOVER 2026 in Aomori」に登壇します！',
+};
+
+const $ = id => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+const st = {type:'join', fmt:'square', img:null, zoom:1, ox:0, oy:0, postEdited:false};
+const qr = new Image(); qr.src = QR_SRC;
+
+// --- session chips ---
+const sessBox = $('sessions');
+SESSIONS.forEach(s => {
+  const l = document.createElement('label');
+  l.innerHTML = `<input type="checkbox" value="${s.id}"><span>${s.chip}</span>`;
+  sessBox.appendChild(l);
+});
+const selectedSessions = () => [...sessBox.querySelectorAll('input:checked')].map(i => SESSIONS.find(s => s.id === i.value));
+
+// --- prefill from URL (?type=speaker&name=..&title=..&s=t1,t2&msg=..&meet=..) ---
+(() => {
+  const p = new URLSearchParams(location.search);
+  const t = p.get('type'); if (BADGE[t]) document.querySelector(`input[name=type][value=${t}]`).checked = true;
+  ['name','title','msg','meet'].forEach(k => { if (p.get(k)) $(k).value = p.get(k).slice(0, $(k).maxLength); });
+  (p.get('s') || '').split(',').forEach(id => { const i = sessBox.querySelector(`input[value="${id}"]`); if (i) i.checked = true; });
+})();
+
+// --- text helpers ---
+const NO_HEAD = '、。，．・：；？！」』）】〕ー〜…ぁぃぅぇぉっゃゅょァィゥェォッャュョ!?),.';
+function wrap(text, maxW, maxLines) {
+  const lines = [];
+  for (const para of String(text).split('\n')) {
+    let cur = '';
+    for (const ch of [...para]) {
+      const next = cur + ch;
+      if (ctx.measureText(next).width > maxW && cur && !NO_HEAD.includes(ch)) { lines.push(cur); cur = ch; }
+      else cur = next;
+    }
+    lines.push(cur);
+  }
+  if (lines.length > maxLines) {
+    lines.length = maxLines;
+    let last = lines[maxLines - 1];
+    while (last && ctx.measureText(last + '…').width > maxW) last = last.slice(0, -1);
+    lines[maxLines - 1] = last + '…';
+  }
+  return lines;
+}
+const JP = (w, px) => `${w} ${px}px 'Noto Sans JP','Hiragino Sans',sans-serif`;
+const EN = (w, px) => `${w} ${px}px 'Jost','Futura','Avenir Next',sans-serif`;
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+
+// --- content block inside the white card; returns height (draw=false to measure) ---
+function content(x, y, w, s, draw) {
+  const v = {
+    name: $('name').value.trim() || 'お名前',
+    title: $('title').value.trim(),
+    msg: $('msg').value.trim(),
+    meet: $('meet').value.trim(),
+    sess: selectedSessions(),
+  };
+  let cy = y;
+  const R = Math.round(108 * s);
+
+  // photo + badge + name
+  const px = x + R, py = cy + R;
+  if (draw) drawAvatar(px, py, R, v.name);
+  const tx = x + R * 2 + 36 * s, tw = w - (tx - x);
+  let ty = cy + 4 * s;
+  ctx.font = JP(900, 34 * s);
+  const bw = ctx.measureText(BADGE[st.type]).width + 44 * s, bh = 58 * s;
+  if (draw) { ctx.fillStyle = '#111'; rr(tx, ty, bw, bh, bh / 2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.textBaseline = 'middle'; ctx.fillText(BADGE[st.type], tx + 22 * s, ty + bh / 2 + 1); }
+  ty += bh + 18 * s;
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = JP(900, 52 * s);
+  for (const ln of wrap(v.name, tw, 1)) { ty += 52 * s; if (draw) { ctx.fillStyle = '#111'; ctx.fillText(ln, tx, ty); } }
+  if (v.title) {
+    ctx.font = JP(700, 26 * s); ty += 12 * s;
+    for (const ln of wrap(v.title, tw, 2)) { ty += 36 * s; if (draw) { ctx.fillStyle = '#444'; ctx.fillText(ln, tx, ty); } }
+  }
+  cy = Math.max(cy + R * 2, ty + 8 * s);
+
+  // message
+  if (v.msg) {
+    cy += 36 * s;
+    ctx.font = JP(900, 40 * s);
+    const lines = wrap(v.msg, w - 40 * s, 3);
+    if (draw) { ctx.fillStyle = '#E8168A'; ctx.fillRect(x, cy, 8 * s, lines.length * 58 * s - 6 * s); }
+    for (const ln of lines) { cy += 46 * s; if (draw) { ctx.fillStyle = '#111'; ctx.fillText(ln, x + 30 * s, cy); } cy += 12 * s; }
+    cy -= 12 * s;
+  }
+
+  // meet
+  if (v.meet) {
+    cy += 34 * s;
+    if (draw) { ctx.font = JP(900, 24 * s); ctx.fillStyle = '#E8168A'; ctx.fillText('こんな人に会いたい', x, cy + 24 * s); }
+    cy += 24 * s + 8 * s;
+    ctx.font = JP(700, 34 * s);
+    for (const ln of wrap(v.meet, w, 2)) { cy += 44 * s; if (draw) { ctx.fillStyle = '#111'; ctx.fillText(ln, x, cy); } }
+  }
+
+  // sessions
+  if (v.sess.length) {
+    cy += 34 * s;
+    const label = st.type === 'speaker' ? '登壇セッション' : '聞きたいセッション';
+    if (draw) { ctx.font = JP(900, 24 * s); ctx.fillStyle = '#E8168A'; ctx.fillText(label, x, cy + 24 * s); }
+    cy += 24 * s + 14 * s;
+    if (v.sess.length === 1) {
+      ctx.font = JP(700, 28 * s);
+      for (const ln of wrap(v.sess[0].full, w, 2)) { cy += 38 * s; if (draw) { ctx.fillStyle = '#111'; ctx.fillText(ln, x, cy); } }
+    } else {
+      ctx.font = JP(700, 24 * s);
+      const ch = 46 * s, gap = 10 * s; let cx = x, rowY = cy;
+      for (const se of v.sess) {
+        const cw = ctx.measureText(se.chip).width + 32 * s;
+        if (cx + cw > x + w && cx > x) { cx = x; rowY += ch + gap; }
+        if (draw) { ctx.strokeStyle = '#E8168A'; ctx.lineWidth = 3 * s; rr(cx, rowY, cw, ch, ch / 2); ctx.stroke();
+          ctx.fillStyle = '#E8168A'; ctx.textBaseline = 'middle'; ctx.fillText(se.chip, cx + 16 * s, rowY + ch / 2 + 1); ctx.textBaseline = 'alphabetic'; }
+        cx += cw + gap;
+      }
+      cy = rowY + ch;
+    }
+  }
+  return cy - y;
+}
+
+function drawAvatar(cx, cy, r, name) {
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.closePath();
+  if (st.img) {
+    ctx.clip();
+    const im = st.img, base = Math.max(2 * r / im.naturalWidth, 2 * r / im.naturalHeight) * st.zoom;
+    const dw = im.naturalWidth * base, dh = im.naturalHeight * base;
+    const maxX = (dw - 2 * r) / 2, maxY = (dh - 2 * r) / 2;
+    st.ox = Math.max(-1, Math.min(1, st.ox)); st.oy = Math.max(-1, Math.min(1, st.oy));
+    ctx.drawImage(im, cx - dw / 2 + st.ox * maxX, cy - dh / 2 + st.oy * maxY, dw, dh);
+  } else {
+    const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+    g.addColorStop(0, '#BFE9F6'); g.addColorStop(.5, '#C9C6E6'); g.addColorStop(1, '#E8168A');
+    ctx.fillStyle = g; ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = JP(900, r * .9); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText([...name][0] || 'S', cx, cy + r * .04);
+  }
+  ctx.restore();
+  ctx.lineWidth = r * .07; ctx.strokeStyle = '#fff';
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+}
+
+function drawLogo(x, y, k) {
+  ctx.fillStyle = '#111'; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+  ctx.font = EN(700, 112 * k);
+  if ('letterSpacing' in ctx) ctx.letterSpacing = `${6 * k}px`;
+  ctx.fillText('SPILLOVER', x, y + 100 * k);
+  const sw = ctx.measureText('SPILLOVER').width;
+  ctx.font = EN(700, 40 * k);
+  if ('letterSpacing' in ctx) ctx.letterSpacing = `${5 * k}px`;
+  ctx.fillText('in Aomori', x + 8 * k, y + 168 * k);
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+  ctx.font = `400 ${92 * k}px 'Kaushan Script','Brush Script MT',cursive`;
+  ctx.textAlign = 'right'; ctx.fillText('2026', x + sw, y + 178 * k); ctx.textAlign = 'left';
+}
+
+function render() {
+  const W = 1080, H = st.fmt === 'story' ? 1920 : 1080;
+  if (cv.height !== H) cv.height = H;
+  cv.classList.toggle('story', st.fmt === 'story');
+  const g = ctx.createLinearGradient(0, 0, W, W * .18);
+  g.addColorStop(0, '#BFE9F6'); g.addColorStop(.35, '#C9C6E6'); g.addColorStop(.7, '#E15AAE'); g.addColorStop(1, '#E8168A');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  const story = st.fmt === 'story';
+  const M = 64, top = story ? 230 : 56;
+  // header
+  if (story) {
+    ctx.font = EN(700, 34); ctx.fillStyle = '#E8168A'; if ('letterSpacing' in ctx) ctx.letterSpacing = '6px';
+    ctx.fillText('2026.11.2 MON ／ AOMORI', M, top); if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+    drawLogo(M, top + 20, 1.12);
+    ctx.font = JP(900, 40); ctx.fillStyle = '#111'; ctx.fillText('青森から、挑戦と変革の文化をつくる。', M, top + 300);
+  } else {
+    drawLogo(M, top - 10, .78);
+    ctx.textAlign = 'right'; ctx.fillStyle = '#111';
+    ctx.font = EN(700, 40); ctx.fillText('2026.11.2 MON', W - M, top + 62);
+    ctx.font = JP(700, 26); ctx.fillText('ねぶたの家 ワ・ラッセ', W - M, top + 104);
+    ctx.textAlign = 'left';
+  }
+
+  // card area
+  const cardTop = story ? 580 : 236;
+  const footH = story ? 280 : 190;
+  const cardBot = H - (story ? 200 : 0) - footH;
+  const pad = story ? 56 : 44;
+  const cw = W - M * 2 - pad * 2, availH = cardBot - cardTop - pad * 2;
+  let s = story ? 1.4 : 1;
+  while (s > .6 && content(0, 0, cw, s, false) > availH) s -= .03;
+  const h = content(0, 0, cw, s, false);
+  const cardH = story ? Math.max(h + pad * 2, 600) : cardBot - cardTop;
+  const cardY = story ? cardTop + Math.max(0, (cardBot - cardTop - cardH) / 2) : cardTop;
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.10)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 10;
+  ctx.fillStyle = 'rgba(255,255,255,.92)'; rr(M, cardY, W - M * 2, cardH, 32); ctx.fill(); ctx.restore();
+  const contentY = cardY + pad + (story ? (cardH - pad * 2 - h) / 2 : Math.max(0, (cardH - pad * 2 - h) / 2));
+  st.avatar = {x: M + pad, y: contentY, s};
+  content(M + pad, contentY, cw, s, true);
+
+  // footer
+  const fy = cardBot + (story ? 40 : 26);
+  const qs = story ? 200 : 132;
+  const qx = W - M - qs;
+  ctx.fillStyle = '#fff'; rr(qx - 6, fy - 6, qs + 12, qs + 12, 14); ctx.fill();
+  if (qr.complete && qr.naturalWidth) { ctx.imageSmoothingEnabled = false; ctx.drawImage(qr, qx, fy, qs, qs); ctx.imageSmoothingEnabled = true; }
+  const k = story ? 1.3 : 1;
+  let ly = fy + 30 * k;
+  ctx.fillStyle = '#111'; ctx.font = JP(900, 28 * k);
+  ctx.fillText('11.2 MON 13:00–17:30', M, ly);
+  ly += 46 * k; ctx.font = JP(900, 24 * k);
+  const pill = '会場参加 無料', pw = ctx.measureText(pill).width + 32 * k, ph = 40 * k;
+  ctx.fillStyle = '#111'; rr(M, ly - ph + 10 * k, pw, ph, ph / 2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.fillText(pill, M + 16 * k, ly);
+  ctx.fillStyle = '#111'; ctx.font = JP(700, 24 * k); ctx.fillText('申込締切 10/30（金）17:00', M + pw + 16 * k, ly);
+  ly += 42 * k; ctx.font = EN(500, 24 * k); ctx.fillText('aomori-spillover.peatix.com', M, ly);
+  if (story) { ly += 46 * k; ctx.font = JP(500, 20 * k); ctx.fillText('主催：青森県　運営：株式会社プレイノベーション', M, ly); }
+}
+
+// --- post text ---
+function postText() {
+  const lines = [POST_HEAD[st.type]];
+  const msg = $('msg').value.trim(), meet = $('meet').value.trim(), sess = selectedSessions();
+  if (msg) lines.push('', msg);
+  if (meet) lines.push('', `こんな人に会いたい：${meet}`);
+  if (sess.length) lines.push('', `${st.type === 'speaker' ? '登壇' : '聞きたい'}：${sess.map(s => s.chip).join('／')}`);
+  lines.push('', '会場参加は無料。11/2（月）ねぶたの家 ワ・ラッセで、ぜひ会いましょう！', `申込（10/30〆）▶ ${PEATIX}`);
+  if (HASHTAGS) lines.push('', HASHTAGS);
+  return lines.join('\n');
+}
+function syncPost() { if (!st.postEdited) $('post').value = postText(); }
+$('post').addEventListener('input', () => { st.postEdited = true; });
+
+// --- events ---
+function update() {
+  st.type = document.querySelector('input[name=type]:checked').value;
+  st.fmt = document.querySelector('input[name=fmt]:checked').value;
+  $('sessLabel').firstChild.textContent = st.type === 'speaker' ? '登壇セッション' : '聞きたいセッション';
+  $('msgCount').textContent = [...$('msg').value].length;
+  $('meetCount').textContent = [...$('meet').value].length;
+  st.postEdited = false; syncPost();
+  render();
+}
+document.querySelectorAll('input,textarea').forEach(el => { if (el.id !== 'post' && el.id !== 'photo' && el.id !== 'zoom') el.addEventListener('input', update); });
+
+$('photo').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  const url = URL.createObjectURL(f), im = new Image();
+  im.onload = () => { st.img = im; st.zoom = 1; st.ox = st.oy = 0; $('zoom').value = 1;
+    $('zoomRow').hidden = $('dragNote').hidden = false; $('clearPhoto').disabled = false; render(); };
+  im.onerror = () => toast('この画像は読み込めませんでした');
+  im.src = url;
+});
+$('clearPhoto').addEventListener('click', () => { st.img = null; $('photo').value = ''; $('zoomRow').hidden = $('dragNote').hidden = true; $('clearPhoto').disabled = true; render(); });
+$('zoom').addEventListener('input', e => { st.zoom = +e.target.value; render(); });
+
+// drag photo on preview
+let drag = null;
+cv.addEventListener('pointerdown', e => { if (!st.img) return; drag = {x: e.clientX, y: e.clientY}; cv.setPointerCapture(e.pointerId); });
+cv.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const k = cv.width / cv.getBoundingClientRect().width, r = 108 * st.avatar.s;
+  const im = st.img, base = Math.max(2 * r / im.naturalWidth, 2 * r / im.naturalHeight) * st.zoom;
+  const maxX = Math.max(1, (im.naturalWidth * base - 2 * r) / 2), maxY = Math.max(1, (im.naturalHeight * base - 2 * r) / 2);
+  st.ox += (e.clientX - drag.x) * k / maxX; st.oy += (e.clientY - drag.y) * k / maxY;
+  drag = {x: e.clientX, y: e.clientY}; render();
+});
+['pointerup','pointercancel'].forEach(t => cv.addEventListener(t, () => { drag = null; }));
+
+// --- export ---
+const blob = () => new Promise(res => cv.toBlob(res, 'image/png'));
+const fname = () => `spillover2026_${st.fmt}.png`;
+async function save() {
+  const b = await blob(), a = document.createElement('a');
+  a.href = URL.createObjectURL(b); a.download = fname(); document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+$('saveBtn').addEventListener('click', save);
+$('shareBtn').addEventListener('click', async () => {
+  const b = await blob(), file = new File([b], fname(), {type: 'image/png'});
+  const text = $('post').value;
+  if (navigator.canShare && navigator.canShare({files: [file]})) {
+    try { await copy(text, true); await navigator.share({files: [file], text}); }
+    catch (err) { if (err.name !== 'AbortError') toast('シェアできませんでした。画像を保存してください'); }
+  } else {
+    await save(); await copy(text, true);
+    toast('画像を保存し、投稿文をコピーしました');
+  }
+});
+async function copy(text, quiet) {
+  try { await navigator.clipboard.writeText(text); if (!quiet) toast('投稿文をコピーしました'); }
+  catch { $('post').select(); document.execCommand('copy'); if (!quiet) toast('投稿文をコピーしました'); }
+}
+$('copyBtn').addEventListener('click', () => copy($('post').value));
+let tt; function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2400); }
+
+// --- boot: wait for web fonts so canvas text uses them ---
+update();
+qr.onload = render;
+Promise.all([
+  document.fonts.load("700 40px 'Jost'"), document.fonts.load("500 24px 'Jost'"),
+  document.fonts.load("400 80px 'Kaushan Script'"),
+  document.fonts.load("900 40px 'Noto Sans JP'", '参加します'), document.fonts.load("700 30px 'Noto Sans JP'", 'あ'),
+  document.fonts.load("500 20px 'Noto Sans JP'", 'あ'),
+]).then(() => document.fonts.ready).then(render, render);
+document.fonts.addEventListener('loadingdone', render);
+</script>
+</body>
+</html>
