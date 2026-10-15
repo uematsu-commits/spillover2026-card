@@ -23,7 +23,10 @@
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}
+/* 本物のファイル入力欄をボタン全体に透明で重ね、クリックを直接受ける */
+.filebtn{position:relative;overflow:hidden}
+.filebtn input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.filebtn:focus-within{outline:2px solid var(--pink);outline-offset:2px}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans JP','Hiragino Sans',sans-serif;font-weight:500;-webkit-text-size-adjust:100%}
 header{background:var(--grad);padding:20px 16px 18px}
 header .in{max-width:1080px;margin:0 auto}
@@ -98,8 +101,7 @@ footer a{color:var(--pink)}
     <div class="field">
       <label class="t">写真<span class="opt">任意・端末の外には送信されません</span></label>
       <div class="photo-row">
-        <button class="btn dark" id="pickPhoto" type="button">写真を選ぶ</button>
-        <input type="file" id="photo" accept="image/*" class="vh" tabindex="-1" aria-hidden="true">
+        <label class="btn dark filebtn">写真を選ぶ<input type="file" id="photo" accept="image/*,.heic,.heif"></label>
         <button class="btn" id="clearPhoto" type="button" disabled>写真を外す</button>
       </div>
       <div class="zoom" id="zoomRow" hidden>
@@ -149,11 +151,18 @@ footer a{color:var(--pink)}
         <button class="btn" id="saveBtn" type="button">画像を保存</button>
         <button class="btn" id="copyBtn" type="button">投稿文をコピー</button>
       </div>
+      <div class="pc-share" id="pcShare" hidden>
+        <div class="note" style="margin:12px 0 8px">PCの場合：ボタンを押すと画像が保存され、投稿画面が開きます。保存した画像をドラッグして添付してください。</div>
+        <div class="actions" style="margin-top:0">
+          <button class="btn dark" id="xBtn" type="button">Xで投稿</button>
+          <button class="btn dark" id="fbBtn" type="button">Facebookで投稿</button>
+        </div>
+      </div>
       <div class="posttext">
         <label class="t" for="post">投稿文（自由に編集できます）</label>
         <textarea id="post"></textarea>
       </div>
-      <div class="note">スマホでは「画像をシェアする」から Instagram・X・Facebook・LINE などに直接投稿できます。PCでは画像を保存して、投稿文と一緒に添付してください。</div>
+      <div class="note">スマホでは「画像をシェアする」から Instagram・X・Facebook・LINE などに画像付きで直接投稿できます。</div>
     </div>
   </section>
 </main>
@@ -425,19 +434,37 @@ function update() {
 }
 document.querySelectorAll('input,textarea').forEach(el => { if (el.id !== 'post' && el.id !== 'photo' && el.id !== 'zoom') el.addEventListener('input', update); });
 
-$('pickPhoto').addEventListener('click', () => { $('photo').value = ''; $('photo').click(); });
-$('photo').addEventListener('change', e => {
+// MacのChromeなどはiPhoneの写真（HEIC）を表示できないので、端末内でJPEGに変換してから読む
+const HEIC2ANY = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+function loadScript(src) {
+  return new Promise((res, rej) => { const el = document.createElement('script'); el.src = src; el.onload = res; el.onerror = rej; document.head.appendChild(el); });
+}
+function loadImage(blob) {
+  return new Promise((res, rej) => { const url = URL.createObjectURL(blob), im = new Image();
+    im.onload = () => res(im); im.onerror = () => { URL.revokeObjectURL(url); rej(); }; im.src = url; });
+}
+async function isHeic(f) {
+  if (/\.hei[cf]$/i.test(f.name) || /hei[cf]/i.test(f.type)) return true;
+  const head = new TextDecoder().decode(await f.slice(4, 12).arrayBuffer());
+  return /^ftyp(heic|heix|hevc|mif1|msf1)/.test(head);
+}
+$('photo').addEventListener('click', () => { $('photo').value = ''; });
+$('photo').addEventListener('change', async e => {
   const f = e.target.files[0]; if (!f) return;
-  const url = URL.createObjectURL(f), im = new Image();
-  im.onload = () => { st.img = im; st.zoom = 1; st.ox = st.oy = 0; $('zoom').value = 1;
-    $('zoomRow').hidden = $('dragNote').hidden = false; $('clearPhoto').disabled = false; render(); };
-  im.onerror = () => {
-    URL.revokeObjectURL(url);
-    // iPhoneの写真（HEIC）はSafari以外のPCブラウザでは読めない
-    const heic = /hei[cf]$/i.test(f.name) || /hei[cf]/i.test(f.type);
-    toast(heic ? 'HEIC形式の写真はこのブラウザで読めません。JPEGかPNGを選ぶか、スマホから作成してください' : 'この画像は読み込めませんでした。JPEGかPNGを選んでください', 5000);
-  };
-  im.src = url;
+  let im;
+  try { im = await loadImage(f); }
+  catch {
+    if (!(await isHeic(f))) { toast('この画像は読み込めませんでした。JPEGかPNGを選んでください', 5000); return; }
+    toast('写真を変換しています…', 20000);
+    try {
+      if (!window.heic2any) await loadScript(HEIC2ANY);
+      const out = await heic2any({blob: f, toType: 'image/jpeg', quality: 0.9});
+      im = await loadImage(Array.isArray(out) ? out[0] : out);
+      toast('写真を読み込みました');
+    } catch { toast('この写真は変換できませんでした。JPEGかPNGに書き出してから選んでください', 6000); return; }
+  }
+  st.img = im; st.zoom = 1; st.ox = st.oy = 0; $('zoom').value = 1;
+  $('zoomRow').hidden = $('dragNote').hidden = false; $('clearPhoto').disabled = false; render();
 });
 $('clearPhoto').addEventListener('click', () => { st.img = null; $('photo').value = ''; $('zoomRow').hidden = $('dragNote').hidden = true; $('clearPhoto').disabled = true; render(); });
 $('zoom').addEventListener('input', e => { st.zoom = +e.target.value; render(); });
@@ -480,6 +507,18 @@ async function copy(text, quiet) {
   catch { $('post').select(); document.execCommand('copy'); if (!quiet) toast('投稿文をコピーしました'); }
 }
 $('copyBtn').addEventListener('click', () => copy($('post').value));
+// PCブラウザは画像を直接SNSへ渡せないため、画像を保存して投稿画面を開く
+const canShareFiles = (() => { try { return !!(navigator.canShare && navigator.canShare({files: [new File([''], 'a.png', {type: 'image/png'})]})); } catch { return false; } })();
+if (!canShareFiles) { $('pcShare').hidden = false; $('shareBtn').textContent = '画像を保存して投稿文をコピー'; }
+$('xBtn').addEventListener('click', () => {
+  window.open(`https://x.com/intent/post?text=${encodeURIComponent($('post').value)}`, '_blank', 'noopener');
+  save(); toast('画像を保存しました。Xの投稿画面に画像をドラッグしてください', 5000);
+});
+$('fbBtn').addEventListener('click', () => {
+  // シェア用ダイアログ（sharer.php）は画像を添付できないため、通常の投稿画面を開く
+  window.open('https://www.facebook.com/', '_blank', 'noopener');
+  save(); copy($('post').value, true); toast('画像を保存し、投稿文をコピーしました。Facebookの「投稿を作成」に貼り付けて画像を添付してください', 6000);
+});
 let tt; function toast(m, ms = 2400) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), ms); }
 
 // --- boot: wait for web fonts so canvas text uses them ---
