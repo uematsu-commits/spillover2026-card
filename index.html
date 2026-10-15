@@ -33,8 +33,10 @@ header .in{max-width:1080px;margin:0 auto}
 header h1{margin:0;font-family:'Jost',sans-serif;font-weight:700;font-size:32px;letter-spacing:.04em;line-height:1}
 header h1 small{font-size:.5em;letter-spacing:.08em;margin-left:.4em}
 header p{margin:8px 0 0;font-weight:700;font-size:15px}
-main{max-width:1080px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
-@media (max-width:820px){main{grid-template-columns:minmax(0,1fr)}.preview{order:-1}}
+main{max-width:1080px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"form preview" "form share";gap:16px 24px;align-items:start}
+.form{grid-area:form}.preview{grid-area:preview}.share{grid-area:share}
+/* スマホは「カード → 入力 → シェア」の順。シェアボタンを入力より先に見せない */
+@media (max-width:820px){main{grid-template-columns:minmax(0,1fr);grid-template-areas:"preview" "form" "share"}}
 .panel{background:var(--card);border-radius:16px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.05)}
 .field{margin-bottom:18px}
 .field:last-child{margin-bottom:0}
@@ -64,10 +66,15 @@ input:focus,textarea:focus{outline:2px solid var(--pink);outline-offset:-1px;bor
 .zoom{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub);margin-top:8px}
 .zoom input{flex:1}
 .note{font-size:12px;color:var(--sub);line-height:1.6;margin-top:8px}
-.preview{position:sticky;top:12px}
-.mobile-hint{display:none;margin:0 0 10px}
-@media (max-width:820px){.mobile-hint{display:block}}
-@media (max-width:820px){.preview{position:static}}
+.tap-hint{margin:0 0 10px;font-size:13px;font-weight:700;color:var(--pink)}
+.need{outline:3px solid var(--pink)!important;outline-offset:0}
+.flash{animation:flash 1.2s ease}
+@keyframes flash{0%,60%{background:#ffe3f1}100%{background:transparent}}
+.inapp{margin-top:12px;background:#111;color:#fff;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.6;font-weight:700}
+.inapp a{display:inline-block;margin-top:8px;background:#fff;color:#111;border-radius:999px;padding:6px 14px;text-decoration:none}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;z-index:50}
+.sheet img{max-width:100%;max-height:70vh;border-radius:8px;-webkit-touch-callout:default}
+.sheet p{color:#fff;font-weight:700;font-size:14px;line-height:1.6;text-align:center;margin:0;max-width:420px}
 .canvas-wrap{display:flex;justify-content:center;background:#ece8f1;border-radius:14px;padding:12px}
 canvas{display:block;width:100%;height:auto;border-radius:6px;box-shadow:0 4px 18px rgba(0,0,0,.12);touch-action:none;cursor:grab}
 canvas.story{width:auto;max-width:100%;max-height:70vh}
@@ -86,10 +93,11 @@ footer a{color:var(--pink)}
 <header><div class="in">
   <h1><img src="logo.png" alt="SPILLOVER in Aomori 2026" width="220" height="62" style="display:block;height:auto"></h1>
   <p>参加表明カードをつくって、SNSでシェアしよう</p>
+  <div class="inapp" id="inapp" hidden></div>
 </div></header>
 
 <main>
-  <section class="panel" aria-label="入力">
+  <section class="panel form" aria-label="入力">
     <div class="field">
       <label class="t">あなたは？</label>
       <div class="seg" id="typeSeg">
@@ -146,9 +154,14 @@ footer a{color:var(--pink)}
         <label><input type="radio" name="fmt" value="square" checked><span>正方形（投稿）</span></label>
         <label><input type="radio" name="fmt" value="story"><span>縦長（ストーリーズ）</span></label>
       </div>
-      <div class="note mobile-hint">↓ 下の入力欄で、写真・名前・メッセージを入れるとカードに反映されます</div>
-      <div class="canvas-wrap"><canvas id="cv" width="1080" height="1080" aria-label="カードのプレビュー"></canvas></div>
-      <div class="actions">
+      <div class="tap-hint">👆 カードの写真の丸や「＋」をタップすると入力できます</div>
+      <div class="canvas-wrap"><canvas id="cv" width="1080" height="1080" aria-label="カードのプレビュー。タップすると写真や名前を入力できます"></canvas></div>
+    </div>
+  </section>
+
+  <section class="share" aria-label="シェア">
+    <div class="panel">
+      <div class="actions" style="margin-top:0">
         <button class="btn primary wide" id="shareBtn" type="button">画像をシェアする</button>
         <button class="btn" id="saveBtn" type="button">画像を保存</button>
         <button class="btn" id="copyBtn" type="button">投稿文をコピー</button>
@@ -177,6 +190,11 @@ footer a{color:var(--pink)}
 </footer>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="sheet" id="sheet" hidden>
+  <img id="sheetImg" alt="作成したカード">
+  <p id="sheetMsg">画像を長押しして「写真に保存」（Androidは「画像をダウンロード」）を選んでください。</p>
+  <button class="btn" id="sheetClose" type="button">閉じる</button>
+</div>
 
 <script>
 const PEATIX = 'https://aomori-spillover.peatix.com/';
@@ -199,8 +217,12 @@ const POST_HEAD = {
 };
 
 const $ = id => document.getElementById(id);
-const cv = $('cv'), ctx = cv.getContext('2d');
-const st = {type:'join', fmt:'square', img:null, zoom:1, ox:0, oy:0, postEdited:false};
+const cv = $('cv');
+let ctx = cv.getContext('2d');
+// 保存・シェア用はプレビューとは別のキャンバスに描く（プレビューの「＋追加」案内を画像に入れないため）
+const exportCv = document.createElement('canvas'); exportCv.width = 1080;
+const st = {type:'join', fmt:'square', img:null, zoom:1, ox:0, oy:0, postEdited:false, exporting:false, hits:[]};
+const HINT = 'rgba(232,22,138,.75)';
 const qr = new Image(); qr.src = QR_SRC;
 // ロゴは告知画像（gen_images.py）と同じCSSで書き出した画像を使い、形を崩さない
 const logoImg = new Image(); logoImg.src = 'logo.png';
@@ -252,7 +274,7 @@ function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
 // --- content block inside the white card; returns height (draw=false to measure) ---
 function content(x, y, w, s, draw) {
   const v = {
-    name: $('name').value.trim() || 'お名前',
+    name: $('name').value.trim(),
     title: $('title').value.trim(),
     msg: $('msg').value.trim(),
     meet: $('meet').value.trim(),
@@ -261,9 +283,12 @@ function content(x, y, w, s, draw) {
   let cy = y;
   const R = Math.round(108 * s);
 
+  const preview = !st.exporting, hit = (act, hx, hy, hw, hh) => { if (draw && preview) st.hits.push({act, x: hx, y: hy, w: hw, h: hh}); };
+
   // photo + badge + name
   const px = x + R, py = cy + R;
   if (draw) drawAvatar(px, py, R, v.name);
+  if (draw && preview) st.hits.push({act: 'photo', cx: px, cy: py, r: R});
   const tx = x + R * 2 + 36 * s, tw = w - (tx - x);
   let ty = cy + 4 * s;
   ctx.font = JP(900, 34 * s);
@@ -272,36 +297,57 @@ function content(x, y, w, s, draw) {
     ctx.fillStyle = '#fff'; ctx.textBaseline = 'middle'; ctx.fillText(BADGE[st.type], tx + 22 * s, ty + bh / 2 + 1); }
   ty += bh + 18 * s;
   ctx.textBaseline = 'alphabetic';
-  ctx.font = JP(900, 52 * s);
-  for (const ln of wrap(v.name, tw, 1)) { ty += 52 * s; if (draw) { ctx.fillStyle = '#111'; ctx.fillText(ln, tx, ty); } }
+  const nameTop = ty;
+  if (v.name || !preview) {
+    ctx.font = JP(900, 52 * s);
+    for (const ln of wrap(v.name || 'お名前', tw, 1)) { ty += 52 * s; if (draw) { ctx.fillStyle = '#111'; ctx.fillText(ln, tx, ty); } }
+  } else {
+    ctx.font = JP(900, 40 * s); ty += 52 * s;
+    if (draw) { ctx.fillStyle = HINT; ctx.fillText('＋ お名前を入力', tx, ty - 4 * s); }
+  }
   if (v.title) {
     ctx.font = JP(700, 26 * s); ty += 12 * s;
     for (const ln of wrap(v.title, tw, 2)) { ty += 36 * s; if (draw) { ctx.fillStyle = '#444'; ctx.fillText(ln, tx, ty); } }
   }
+  hit('name', tx, nameTop, tw, ty + 12 * s - nameTop);
   cy = Math.max(cy + R * 2, ty + 8 * s);
 
+  // 未入力の項目は、プレビューだけ「＋ 〜を追加」を薄く出してタップで入力欄へ
+  const hintRow = (act, label) => {
+    cy += 28 * s; const top = cy;
+    ctx.font = JP(700, 30 * s); cy += 38 * s;
+    if (draw) { ctx.fillStyle = HINT; ctx.fillText(label, x, cy); }
+    hit(act, x, top - 8 * s, w, cy - top + 18 * s);
+  };
+
   // message
+  if (!v.msg && preview) hintRow('msg', '＋ ひとことを追加');
   if (v.msg) {
+    const top = cy;
     cy += 36 * s;
     ctx.font = JP(900, 40 * s);
     const lines = wrap(v.msg, w - 40 * s, 3);
     if (draw) { ctx.fillStyle = '#E8168A'; ctx.fillRect(x, cy, 8 * s, lines.length * 58 * s - 6 * s); }
     for (const ln of lines) { cy += 46 * s; if (draw) { ctx.fillStyle = '#111'; ctx.fillText(ln, x + 30 * s, cy); } cy += 12 * s; }
     cy -= 12 * s;
+    hit('msg', x, top, w, cy - top + 12 * s);
   }
 
   // meet
+  if (!v.meet && preview) hintRow('meet', '＋ こんな人に会いたい を追加');
   if (v.meet) {
-    cy += 34 * s;
+    cy += 34 * s; const top = cy;
     if (draw) { ctx.font = JP(900, 24 * s); ctx.fillStyle = '#E8168A'; ctx.fillText('こんな人に会いたい', x, cy + 24 * s); }
     cy += 24 * s + 8 * s;
     ctx.font = JP(700, 34 * s);
     for (const ln of wrap(v.meet, w, 2)) { cy += 44 * s; if (draw) { ctx.fillStyle = '#111'; ctx.fillText(ln, x, cy); } }
+    hit('meet', x, top, w, cy - top + 12 * s);
   }
 
   // sessions
+  if (!v.sess.length && preview) hintRow('sess', st.type === 'speaker' ? '＋ 登壇セッションを選ぶ' : '＋ 聞きたいセッションを選ぶ');
   if (v.sess.length) {
-    cy += 34 * s;
+    cy += 34 * s; const sTop = cy;
     const label = st.type === 'speaker' ? '登壇セッション' : '聞きたいセッション';
     if (draw) { ctx.font = JP(900, 24 * s); ctx.fillStyle = '#E8168A'; ctx.fillText(label, x, cy + 24 * s); }
     cy += 24 * s + 14 * s;
@@ -320,6 +366,7 @@ function content(x, y, w, s, draw) {
       }
       cy = rowY + ch;
     }
+    hit('sess', x, sTop, w, cy - sTop + 12 * s);
   }
   return cy - y;
 }
@@ -338,22 +385,41 @@ function drawAvatar(cx, cy, r, name) {
     const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
     g.addColorStop(0, '#BFE9F6'); g.addColorStop(.5, '#C9C6E6'); g.addColorStop(1, '#E8168A');
     ctx.fillStyle = g; ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.font = JP(900, r * .9); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText([...name][0] || 'S', cx, cy + r * .04);
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (st.exporting) { ctx.font = JP(900, r * .9); ctx.fillText([...name][0] || 'S', cx, cy + r * .04); }
+    else {
+      // 写真が未選択のときはカメラの絵と「写真を追加」を出し、押せることを伝える
+      const bw = r * .86, bh = r * .58, by = cy - r * .5;
+      ctx.beginPath(); ctx.roundRect(cx - bw / 2, by, bw, bh, r * .1); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(cx - bw * .2, by - r * .1, bw * .4, r * .14, r * .04); ctx.fill();
+      ctx.fillStyle = '#E8168A'; ctx.beginPath(); ctx.arc(cx, by + bh / 2, r * .19, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, by + bh / 2, r * .11, 0, Math.PI * 2); ctx.fill();
+      ctx.font = JP(900, r * .24); ctx.fillText('写真を追加', cx, cy + r * .42);
+    }
   }
   ctx.restore();
   ctx.lineWidth = r * .07; ctx.strokeStyle = '#fff';
   ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  if (!st.img && !st.exporting) {
+    ctx.save(); ctx.setLineDash([r * .12, r * .08]); ctx.lineWidth = r * .03; ctx.strokeStyle = '#E8168A';
+    ctx.beginPath(); ctx.arc(cx, cy, r * 1.07, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+  }
 }
 
 function drawLogo(x, y, w) {
   if (logoImg.complete && logoImg.naturalWidth) ctx.drawImage(logoImg, x, y, w, w * logoImg.naturalHeight / logoImg.naturalWidth);
 }
 
-function render() {
+function render(canvas = cv, exporting = false) {
+  const prev = ctx; ctx = canvas.getContext('2d'); st.exporting = exporting;
+  try { drawCard(canvas); } finally { ctx = prev; st.exporting = false; }
+  if (canvas === cv) { cv.style.touchAction = st.img ? 'none' : 'manipulation'; scheduleExport(); }
+}
+function drawCard(canvas) {
   const W = 1080, H = st.fmt === 'story' ? 1920 : 1080;
-  if (cv.height !== H) cv.height = H;
-  cv.classList.toggle('story', st.fmt === 'story');
+  if (canvas.height !== H) canvas.height = H;
+  if (canvas === cv) cv.classList.toggle('story', st.fmt === 'story');
+  if (!st.exporting) st.hits = [];
   const g = ctx.createLinearGradient(0, 0, W, W * .18);
   g.addColorStop(0, '#BFE9F6'); g.addColorStop(.35, '#C9C6E6'); g.addColorStop(.7, '#E15AAE'); g.addColorStop(1, '#E8168A');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
@@ -388,7 +454,7 @@ function render() {
   ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.10)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 10;
   ctx.fillStyle = 'rgba(255,255,255,.92)'; rr(M, cardY, W - M * 2, cardH, 32); ctx.fill(); ctx.restore();
   const contentY = cardY + pad + (story ? (cardH - pad * 2 - h) / 2 : Math.max(0, (cardH - pad * 2 - h) / 2));
-  st.avatar = {x: M + pad, y: contentY, s};
+  if (!st.exporting) st.avatar = {x: M + pad, y: contentY, s};
   content(M + pad, contentY, cw, s, true);
 
   // footer
@@ -432,6 +498,7 @@ function update() {
   $('msgCount').textContent = [...$('msg').value].length;
   $('meetCount').textContent = [...$('meet').value].length;
   st.postEdited = false; syncPost();
+  if ($('name').value.trim()) $('name').classList.remove('need');
   render();
 }
 document.querySelectorAll('input,textarea').forEach(el => { if (el.id !== 'post' && el.id !== 'photo' && el.id !== 'zoom') el.addEventListener('input', update); });
@@ -483,34 +550,80 @@ async function loadPhoto(f) {
 $('clearPhoto').addEventListener('click', () => { st.img = null; $('photo').value = ''; $('zoomRow').hidden = $('dragNote').hidden = true; $('clearPhoto').disabled = true; render(); });
 $('zoom').addEventListener('input', e => { st.zoom = +e.target.value; render(); });
 
-// drag photo on preview
-let drag = null;
-cv.addEventListener('pointerdown', e => { if (!st.img) return; drag = {x: e.clientX, y: e.clientY}; cv.setPointerCapture(e.pointerId); });
+// カードのタップで編集：写真の丸→写真選択、名前・ひとこと等→該当の入力欄へ。写真の丸のドラッグは位置調整
+const toCanvas = e => { const r = cv.getBoundingClientRect(); return {x: (e.clientX - r.left) * cv.width / r.width, y: (e.clientY - r.top) * cv.height / r.height}; };
+const hitAt = p => [...st.hits].reverse().find(h => h.r ? Math.hypot(p.x - h.cx, p.y - h.cy) <= h.r * 1.1 : p.x >= h.x && p.x <= h.x + h.w && p.y >= h.y && p.y <= h.y + h.h);
+function focusField(el) {
+  el.scrollIntoView({behavior: 'smooth', block: 'center'});
+  el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+  if (el.focus) el.focus({preventScroll: true});
+}
+function edit(act) {
+  if (act === 'photo') $('photo').click();
+  else if (act === 'sess') focusField(sessBox);
+  else focusField($(act));
+}
+let drag = null, moved = false;
+cv.addEventListener('pointerdown', e => {
+  moved = false;
+  const h = hitAt(toCanvas(e));
+  if (st.img && h && h.act === 'photo') { drag = {x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY}; cv.setPointerCapture(e.pointerId); }
+});
 cv.addEventListener('pointermove', e => {
-  if (!drag) return;
+  if (!drag) { cv.style.cursor = hitAt(toCanvas(e)) ? 'pointer' : 'default'; return; }
+  if (Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 6) moved = true;
+  if (!moved) return;
   const k = cv.width / cv.getBoundingClientRect().width, r = 108 * st.avatar.s;
   const im = st.img, base = Math.max(2 * r / im.naturalWidth, 2 * r / im.naturalHeight) * st.zoom;
   const maxX = Math.max(1, (im.naturalWidth * base - 2 * r) / 2), maxY = Math.max(1, (im.naturalHeight * base - 2 * r) / 2);
   st.ox += (e.clientX - drag.x) * k / maxX; st.oy += (e.clientY - drag.y) * k / maxY;
-  drag = {x: e.clientX, y: e.clientY}; render();
+  drag.x = e.clientX; drag.y = e.clientY; render();
 });
 ['pointerup','pointercancel'].forEach(t => cv.addEventListener(t, () => { drag = null; }));
+cv.addEventListener('click', e => {
+  if (moved) { moved = false; return; }
+  const h = hitAt(toCanvas(e)); if (h) edit(h.act);
+});
 
 // --- export ---
-const blob = () => new Promise(res => cv.toBlob(res, 'image/png'));
 const fname = () => `spillover2026_${st.fmt}.png`;
+const blob = () => { render(exportCv, true); return new Promise(res => exportCv.toBlob(res, 'image/png')); };
+// iPhoneのSafariは、ボタンを押してから待ち時間があると共有を拒否する。
+// そのため画像は入力のたびに先に作っておき、押した瞬間に共有メニューを開く
+let exportTimer, exportVer = 0, exportFile = null;
+function scheduleExport() {
+  const v = ++exportVer; exportFile = null; clearTimeout(exportTimer);
+  exportTimer = setTimeout(() => { render(exportCv, true); exportCv.toBlob(b => { if (b && v === exportVer) exportFile = new File([b], fname(), {type: 'image/png'}); }, 'image/png'); }, 250);
+}
+function requireName() {
+  if ($('name').value.trim()) return true;
+  const n = $('name'); n.classList.add('need'); focusField(n);
+  toast('お名前を入れてください'); return false;
+}
+// スマホ（特にアプリ内ブラウザ）はダウンロードできないことが多いので、画像を表示して長押しで保存してもらう
+async function showSheet(msg) {
+  const b = await blob();
+  $('sheetImg').src = URL.createObjectURL(b);
+  $('sheetMsg').textContent = msg || '画像を長押しして「写真に保存」（Androidは「画像をダウンロード」）を選んでください。';
+  $('sheet').hidden = false;
+}
+$('sheetClose').addEventListener('click', () => { $('sheet').hidden = true; URL.revokeObjectURL($('sheetImg').src); });
 async function save() {
+  if (isMobile) return showSheet();
   const b = await blob(), a = document.createElement('a');
   a.href = URL.createObjectURL(b); a.download = fname(); document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
-$('saveBtn').addEventListener('click', save);
+$('saveBtn').addEventListener('click', () => { if (requireName()) save(); });
 $('shareBtn').addEventListener('click', async () => {
-  const b = await blob(), file = new File([b], fname(), {type: 'image/png'});
+  if (!requireName()) return;
   const text = $('post').value;
-  if (useNativeShare && navigator.canShare({files: [file]})) {
-    try { await copy(text, true); await navigator.share({files: [file], text}); }
-    catch (err) { if (err.name !== 'AbortError') toast('シェアできませんでした。画像を保存してください'); }
+  if (useNativeShare) {
+    if (!exportFile) { clearTimeout(exportTimer); exportFile = new File([await blob()], fname(), {type: 'image/png'}); }
+    try { await navigator.share({files: [exportFile], text}); }
+    catch (err) { if (err.name !== 'AbortError') showSheet('シェアできませんでした。画像を長押しして保存し、Instagram・X・Facebookのアプリから投稿してください。'); }
+  } else if (isMobile) {
+    copy(text, true); showSheet('画像を長押しして保存し、Instagram・X・Facebookのアプリから投稿してください（投稿文はコピー済みです）。');
   } else {
     await save(); await copy(text, true);
     toast('画像を保存し、投稿文をコピーしました');
@@ -527,6 +640,20 @@ $('copyBtn').addEventListener('click', () => copy($('post').value));
 const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
 const canShareFiles = (() => { try { return !!(navigator.canShare && navigator.canShare({files: [new File([''], 'a.png', {type: 'image/png'})]})); } catch { return false; } })();
 const useNativeShare = isMobile && canShareFiles;
+// LINE・Instagram・Facebookなどのアプリ内ブラウザは共有や保存が制限されるため、普通のブラウザで開くよう案内する
+const IN_APP = (u => /Line\//i.test(u) ? 'LINE' : /Instagram/i.test(u) ? 'Instagram' : /FBAN|FBAV|FB_IAB|FBIOS/i.test(u) ? 'Facebook'
+  : /Messenger/i.test(u) ? 'Messenger' : /Twitter/i.test(u) ? 'X' : /TikTok|musical_ly|BytedanceWebview/i.test(u) ? 'TikTok' : '')(navigator.userAgent);
+if (IN_APP) {
+  const browser = /iPhone|iPad|iPod/.test(navigator.userAgent) ? 'Safari' : 'Chrome';
+  $('inapp').hidden = false;
+  if (IN_APP === 'LINE') {
+    // LINEは openExternalBrowser=1 を付けると標準ブラウザで開ける
+    const u = new URL(location.href); u.searchParams.set('openExternalBrowser', '1');
+    $('inapp').innerHTML = `LINEの中で開いています。画像付きでシェアするには、${browser}で開いてください。<br><a href="${u.href}">${browser}で開く</a>`;
+  } else {
+    $('inapp').textContent = `${IN_APP}アプリの中で開いています。画像付きでシェアするには、画面の「…」メニューから「${browser}で開く」（ブラウザで開く）を選んでください。`;
+  }
+}
 if (!useNativeShare) { $('pcShare').hidden = false; $('shareBtn').textContent = '画像を保存して投稿文をコピー'; }
 // XやFacebookは外部ページから画像を渡す仕組みがないため、画像をクリップボードに入れて⌘Vで添付してもらう。
 // クリップボードへの書き込みはこのページにフォーカスがある間に行い、そのあとで投稿画面を開く
@@ -536,12 +663,14 @@ async function copyImage() {
   catch { return false; }
 }
 $('xBtn').addEventListener('click', async () => {
+  if (!requireName()) return;
   const ok = await copyImage();
   window.open(`https://x.com/intent/post?text=${encodeURIComponent($('post').value)}`, '_blank', 'noopener');
   if (ok) toast(`画像をコピーしました。Xの投稿欄で ${PASTE} を押すと画像が添付されます`, 8000);
   else { save(); toast('画像を保存しました。Xの投稿画面に画像をドラッグしてください', 6000); }
 });
 $('fbBtn').addEventListener('click', async () => {
+  if (!requireName()) return;
   // Facebookは外部から投稿文も渡せないので、画像を貼ったあと「投稿文をコピー」で文章を貼ってもらう
   const ok = await copyImage();
   window.open('https://www.facebook.com/', '_blank', 'noopener');
@@ -552,13 +681,13 @@ let tt; function toast(m, ms = 2400) { const t = $('toast'); t.textContent = m; 
 
 // --- boot: wait for web fonts so canvas text uses them ---
 update();
-qr.onload = render; logoImg.onload = render;
+qr.onload = () => render(); logoImg.onload = () => render();
 Promise.all([
   document.fonts.load("700 40px 'Jost'"), document.fonts.load("500 24px 'Jost'"),
   document.fonts.load("900 40px 'Noto Sans JP'", '参加します'), document.fonts.load("700 30px 'Noto Sans JP'", 'あ'),
   document.fonts.load("500 20px 'Noto Sans JP'", 'あ'),
-]).then(() => document.fonts.ready).then(render, render);
-document.fonts.addEventListener('loadingdone', render);
+]).then(() => document.fonts.ready).then(() => render(), () => render());
+document.fonts.addEventListener('loadingdone', () => render());
 </script>
 </body>
 </html>
