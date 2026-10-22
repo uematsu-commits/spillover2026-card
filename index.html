@@ -177,7 +177,7 @@ footer a{color:var(--pink)}
         <label class="t" for="post">投稿文（自由に編集できます）</label>
         <textarea id="post"></textarea>
       </div>
-      <div class="note">スマホでは「画像をシェアする」から Instagram・X・Facebook・LINE などに画像付きで直接投稿できます。</div>
+      <div class="note">スマホでは「画像をシェアする」から Instagram・X・Facebook・LINE などに画像付きで直接投稿できます。<br><b>Facebook・Instagramは投稿文が自動で入りません。</b>シェアボタンを押すと投稿文（ハッシュタグ入り）がコピーされるので、投稿欄を長押しして貼り付けてください。</div>
     </div>
   </section>
 </main>
@@ -198,7 +198,7 @@ footer a{color:var(--pink)}
 
 <script>
 const PEATIX = 'https://aomori-spillover.peatix.com/';
-const HASHTAGS = ''; // 公式ハッシュタグが決まったら '#〇〇' を入れる
+const HASHTAGS = '#SPILLOVER2026'; // 9/16の告知文と同じ。増やすときは半角スペース区切りで足す
 const QR_SRC = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXQAAAF0AQAAAAAbGP/+AAACfklEQVR4nO1cUW7DIAy1rf6TG/T+x9oNwgk82WAImZSWam1I8VO0MfpUWWA9OzYMGXoQqYsO4PxvX5+IBTIREReQcZQHF2gJ49nfB3L+v67PDQCyBMUl/eYojoSB0T7aEHz9j0Ez8qOJT0JgeXRQRSkThrS/A9RDBuc/oz97xAUisglRC1//Y9Dk/oMatnSwZhX6qD3k/OutT2BmdZWI/IO8Qk2kF2gIY9rfAeohg/Of0R/8M8tx0QflaQi+/segyfi3Jkhp8EKdkUAWNJY1UWw0+8n5p64P8AoSm9RJJHKlAW/+DPJkrL5fx6DJ+LBzEpkKLE6lflUGNjma/eT8k/2Hi2/on+mneg4ULbJykPvPI9Ck/sNVf7LmbOJakSn3n6vtL72ZD02cSj5j+Q8U56kJ0mj2k/NHWZ+wkZrkM1Ff3C21Vqfy/ToGzVn/4U3/dFsO4l1rdTj7yfmn5z/c5sxVf0KOZeUdzePXI9Ck9eewigpZwbBIECflqSXE0ewn55+vP5zrP1VwUkatEFIWH8+fH4Km48d81DBny9Y5rQg5f9bJ8ezvAzn/Hf0vTgc2EjZRjPUUUOqivvT95PyvXh9oWhVWRawptME4o9lPzh8h/8mw+mGpSIO9f1l3w/frGDQZH/JpsbYXtnUbblqoo9lPzj99fdjER84froB3cZWaQgc9DuTn558CzXj+OYqviJcEzmO7wgNWjpYEW7Lo0ewn54+QP0M7qEfIOIczgcevx6Cp718EPb9a2l5hzSpkouT6c7X9pU/wg75tJei43ryIWCfv3n+/5v6+mY8JetVd5nbXBqNdhH/1+3tAXWxw/snrif7/Nw5Bxx/D7PxfizW38SHQIiAAAAAASUVORK5CYII=';
 
 const SESSIONS = [
@@ -623,8 +623,14 @@ $('shareBtn').addEventListener('click', async () => {
   const text = $('post').value;
   if (useNativeShare) {
     if (!exportFile) { clearTimeout(exportTimer); exportFile = new File([await blob()], fname(), {type: 'image/png'}); }
-    try { await navigator.share({files: [exportFile], text}); }
-    catch (err) { if (err.name !== 'AbortError') showSheet('シェアできませんでした。画像を長押しして保存し、Instagram・X・Facebookのアプリから投稿してください。'); }
+    // FacebookとInstagramは共有メニューから渡した文章を受け取らないため、先に投稿文をコピーしておく。
+    // iPhoneでは share() の前に待ちを入れられないので、コピーは待たずに続けて呼ぶ
+    try { navigator.clipboard.writeText(text).catch(() => {}); } catch {}
+    try {
+      await navigator.share({files: [exportFile], text});
+      toast('投稿文をコピーしました。Facebook・Instagramでは投稿欄に貼り付けてください', 6000);
+    }
+    catch (err) { if (err.name !== 'AbortError') showSheet('シェアできませんでした。画像を長押しして保存し、Instagram・X・Facebookのアプリから投稿してください（投稿文はコピー済みです）。'); }
   } else if (isMobile) {
     copy(text, true); showSheet('画像を長押しして保存し、Instagram・X・Facebookのアプリから投稿してください（投稿文はコピー済みです）。');
   } else {
