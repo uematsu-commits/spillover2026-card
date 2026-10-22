@@ -74,6 +74,13 @@ input:focus,textarea:focus{outline:2px solid var(--pink);outline-offset:-1px;bor
 .inapp a{display:inline-block;margin-top:8px;background:#fff;color:#111;border-radius:999px;padding:6px 14px;text-decoration:none}
 .sheet{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;z-index:50}
 .sheet img{max-width:100%;max-height:70vh;border-radius:8px;-webkit-touch-callout:default}
+.guide-box{background:#fff;border-radius:16px;padding:20px;max-width:460px;width:100%;max-height:92vh;overflow:auto}
+.guide-box h2{margin:0 0 12px;font-size:18px}
+.guide-box img{display:block;width:100%;max-height:28vh;object-fit:contain;border-radius:8px;background:#ece8f1}
+.guide-box ol{margin:14px 0;padding-left:1.4em;font-size:14px;line-height:1.7}
+.guide-box li{margin:6px 0}
+.guide-box kbd{display:inline-block;background:#111;color:#fff;border-radius:6px;padding:0 6px;font:inherit;font-weight:700}
+.guide-actions{display:grid;gap:8px}
 .sheet p{color:#fff;font-weight:700;font-size:14px;line-height:1.6;text-align:center;margin:0;max-width:420px}
 .canvas-wrap{display:flex;justify-content:center;background:#ece8f1;border-radius:14px;padding:12px}
 canvas{display:block;width:100%;height:auto;border-radius:6px;box-shadow:0 4px 18px rgba(0,0,0,.12);touch-action:none;cursor:grab}
@@ -167,7 +174,7 @@ footer a{color:var(--pink)}
         <button class="btn" id="copyBtn" type="button">投稿文をコピー</button>
       </div>
       <div class="pc-share" id="pcShare" hidden>
-        <div class="note" style="margin:12px 0 8px">PCの場合：ボタンを押すとカード画像がコピーされ、投稿画面が開きます。投稿欄で <b>⌘V</b>（Windowsは Ctrl+V）を押すと画像が添付されます。</div>
+        <div class="note" style="margin:12px 0 8px">PCの場合：ボタンを押すと投稿の手順が表示されます。</div>
         <div class="actions" style="margin-top:0">
           <button class="btn dark" id="xBtn" type="button">Xで投稿</button>
           <button class="btn dark" id="fbBtn" type="button">Facebookで投稿</button>
@@ -194,6 +201,16 @@ footer a{color:var(--pink)}
   <img id="sheetImg" alt="作成したカード">
   <p id="sheetMsg">画像を長押しして「写真に保存」（Androidは「画像をダウンロード」）を選んでください。</p>
   <button class="btn" id="sheetClose" type="button">閉じる</button>
+</div>
+
+<div class="sheet" id="guide" hidden>
+  <div class="guide-box" role="dialog" aria-labelledby="guideTitle">
+    <h2 id="guideTitle"></h2>
+    <img id="guideImg" alt="投稿するカード">
+    <ol id="guideSteps"></ol>
+    <div class="guide-actions" id="guideActions"></div>
+    <button class="btn" id="guideClose" type="button" style="width:100%;margin-top:8px">閉じる</button>
+  </div>
 </div>
 
 <script>
@@ -671,21 +688,45 @@ async function copyImage() {
   try { await navigator.clipboard.write([new ClipboardItem({'image/png': blob()})]); return true; }
   catch { return false; }
 }
-$('xBtn').addEventListener('click', async () => {
-  if (!requireName()) return;
-  const ok = await copyImage();
-  window.open(`https://x.com/intent/post?text=${encodeURIComponent($('post').value)}`, '_blank', 'noopener');
-  if (ok) toast(`画像をコピーしました。Xの投稿欄で ${PASTE} を押すと画像が添付されます`, 8000);
-  else { save(); toast('画像を保存しました。Xの投稿画面に画像をドラッグしてください', 6000); }
-});
-$('fbBtn').addEventListener('click', async () => {
-  if (!requireName()) return;
-  // Facebookは外部から投稿文も渡せないので、画像を貼ったあと「投稿文をコピー」で文章を貼ってもらう
-  const ok = await copyImage();
-  window.open('https://www.facebook.com/', '_blank', 'noopener');
-  if (ok) toast(`画像をコピーしました。「投稿を作成」で ${PASTE} → 画像が添付されます。文章はこのページの「投稿文をコピー」から`, 10000);
-  else { save(); copy($('post').value, true); toast('画像を保存し、投稿文をコピーしました。Facebookの「投稿を作成」に貼り付けて画像を添付してください', 6000); }
-});
+// PCでは、手順を書いたパネルをこのページに出したまま投稿画面を開く。
+// XやFacebookから戻ってきても次の手順が見えるようにするため（自動で画像を添付する仕組みは両社にない）
+const kbd = `<kbd>${PASTE}</kbd>`;
+function openGuide(kind) {
+  // パネルはすぐ出し、カード画像は作れ次第差し込む（画像作成を待つと押してから表示まで間が空く）
+  $('guideImg').removeAttribute('src');
+  (exportFile ? Promise.resolve(exportFile) : blob()).then(b => { $('guideImg').src = URL.createObjectURL(b); });
+  const acts = $('guideActions'); acts.innerHTML = '';
+  const addBtn = (label, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = `btn ${cls}`; b.textContent = label; b.addEventListener('click', () => fn(b)); acts.appendChild(b); return b; };
+  if (kind === 'x') {
+    $('guideTitle').textContent = 'Xに投稿する';
+    $('guideSteps').innerHTML = `<li>下の「画像をコピーしてXを開く」を押す（投稿文は入力された状態で開きます）</li>
+      <li>Xの投稿欄で、文章の最後をクリックしてから ${kbd} を押す → カード画像が添付されます</li>
+      <li>「ポストする」を押して完了</li>`;
+    addBtn('画像をコピーしてXを開く', 'primary', async b => {
+      const ok = await copyImage();
+      window.open(`https://x.com/intent/post?text=${encodeURIComponent($('post').value)}`, '_blank', 'noopener');
+      if (ok) b.textContent = `✓ 画像をコピーしました。Xの投稿欄で ${PASTE} を押してください`;
+      else { save(); b.textContent = '画像を保存しました。保存した画像をXの投稿欄にドラッグしてください'; }
+    });
+  } else {
+    $('guideTitle').textContent = 'Facebookに投稿する';
+    $('guideSteps').innerHTML = `<li>「① 画像をコピーしてFacebookを開く」を押す</li>
+      <li>Facebookの「その気持ち、シェアしよう」をクリックし、${kbd} を押す → カード画像が添付されます</li>
+      <li>このページに戻って「② 投稿文をコピー」を押し、Facebookの投稿欄で ${kbd}</li>
+      <li>「投稿」を押して完了</li>`;
+    addBtn('① 画像をコピーしてFacebookを開く', 'primary', async b => {
+      const ok = await copyImage();
+      window.open('https://www.facebook.com/', '_blank', 'noopener');
+      if (ok) b.textContent = `✓ 画像をコピーしました。「その気持ち、シェアしよう」で ${PASTE}`;
+      else { save(); b.textContent = '画像を保存しました。Facebookの投稿欄にドラッグしてください'; }
+    });
+    addBtn('② 投稿文をコピー', 'dark', async b => { await copy($('post').value, true); b.textContent = `✓ 投稿文をコピーしました。Facebookの投稿欄で ${PASTE}`; });
+  }
+  $('guide').hidden = false;
+}
+$('guideClose').addEventListener('click', () => { $('guide').hidden = true; URL.revokeObjectURL($('guideImg').src); });
+$('xBtn').addEventListener('click', () => { if (requireName()) openGuide('x'); });
+$('fbBtn').addEventListener('click', () => { if (requireName()) openGuide('fb'); });
 let tt; function toast(m, ms = 2400) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), ms); }
 
 // --- boot: wait for web fonts so canvas text uses them ---
